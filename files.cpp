@@ -1,23 +1,33 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <unistd.h>
+#include <sstream>
+#include <thread>
+#include <chrono>
 
 int main() {
-    std::vector<std::ofstream> files;
-    for (int i = 0; i < 1000; ++i) {
-        std::string filename = "file_" + std::to_string(i) + ".txt";
-        files.emplace_back(filename);
-        if (!files.back().is_open()) {
-            std::cerr << "Failed to open file: " << filename << std::endl;
-            return 1;
+    std::vector<std::ofstream> fileStreams;
+    const int totalFiles = 100; 
+
+    for (int i = 0; i < totalFiles; ++i) {
+        std::ostringstream filename;
+        filename << "file_" << i << ".txt";
+        std::ofstream ofs(filename.str());
+        if (!ofs.is_open()) {
+            std::cerr << "Failed to open " << filename.str() << std::endl;
+            break;
         }
-        sleep(1);  // Затримка на 1 секунду
+        ofs << "This is " << filename.str() << std::endl;
+        fileStreams.push_back(std::move(ofs));
     }
 
-    for (auto& file : files) {
-        file.close();
+    std::cout << "Opened " << fileStreams.size() << " files." << std::endl;
+    std::cout << "Process is now sleeping so you can inspect /proc/<pid>/fd" << std::endl;
+    std::cout << "Press Ctrl+C to exit when done." << std::endl;
+    
+    while (true) {
+        std::this_thread::sleep_for(std::chrono::seconds(60));
     }
-
+    
     return 0;
 }
